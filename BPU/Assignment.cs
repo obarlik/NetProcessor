@@ -11,21 +11,27 @@ namespace BPU
         public string Variable;
         public Expression<Func<Scope, object>> Expression;
         
-        public override async Task<ProcessStep> Process(Scope scope)
+        protected override async Task<ProcessStep> Process(Scope scope)
         {
-            var t = await base.Process(scope);
-            var result = Expression.Compile()(scope);
+            return await Task.Run(() =>
+            {
+                scope.Result = Expression.Compile()(scope);
 
-            if (scope.ContainsKey(Variable))
-                scope[Variable] = result;
-            else if (scope.Context.ContainsKey(Variable))
-                scope.Context[Variable] = result;
-            else if (scope.Context.Host.ContainsKey(Variable))
-                scope.Context.Host[Variable] = result;
+                if (scope.ContainsKey(Variable))
+                {
+                    scope[Variable] = scope.Result;
+                }
+                else if (scope.Context.ContainsKey(Variable))
+                {
+                    scope.Context[Variable] = scope.Result;
+                }
+                else if (scope.Context.Host.ContainsKey(Variable))
+                {
+                    scope.Context.Host[Variable] = scope.Result;
+                }
 
-            context.CurrentScope.Result = result;
-
-            return NextStep;
+                return NextStep;
+            });
         }
     }
 }

@@ -8,14 +8,13 @@ namespace BPU
 {
     public class Decision : ProcessStep
     {
-        public Expression<Func<Context, bool>> Expression;
+        public Expression<Func<Scope, bool>> Expression;
         public ProcessStep TrueStep;
-        public bool Reversed;
 
-        public override async Task<ProcessStep> Process(Context context)
+        protected override async Task<ProcessStep> Process(Scope scope)
         {
             return await Task.Run(() =>
-                Expression.Compile()(context) ^ Reversed ?
+                Expression.Compile()(scope) ?
                     TrueStep :
                     NextStep);
         }

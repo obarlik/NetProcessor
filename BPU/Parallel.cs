@@ -9,9 +9,12 @@ namespace BPU
     {
         public ProcessStep ParallelStep;
 
-        public override async Task<ProcessStep> Process(Scope scope)
+        protected override async Task<ProcessStep> Process(Scope scope)
         {
-            await ParallelStep.Process(scope.Clone());
+#pragma warning disable CS4014
+            ParallelStep.Execute(scope.Clone());
+#pragma warning restore CS4014
+
             return await base.Process(scope);
         }
     }

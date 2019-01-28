@@ -13,6 +13,12 @@ namespace BPU
         public long ScopeNumber;
         public Context Context;
         public ProcessStep CurrentStep;
+
+        internal Scope Clone()
+        {
+            throw new NotImplementedException();
+        }
+
         public Scope CallerScope;
         public Dictionary<string, object> Parameters;
         public object Result;
@@ -29,7 +35,7 @@ namespace BPU
 
         public async Task AddLog(string message, params object[] prms)
         {
-            await Context.AddLog(this, message, prms);
+              await Context.AddLog(this, message, prms);
         }
 
 
@@ -45,7 +51,7 @@ namespace BPU
             {
                 try
                 {
-                    CurrentStep = await CurrentStep.Process(this);
+                    CurrentStep = await CurrentStep.Execute(this);
                 }
                 catch(Exception ex)
                 {

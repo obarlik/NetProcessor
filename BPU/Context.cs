@@ -23,12 +23,7 @@ namespace BPU
 
         public async Task AddLog(Scope scope, string message, params object[] prms)
         {
-            await Task.Run(() => Logs.Add(new Log()
-            {
-                Scope = scope,
-                Time = DateTimeOffset.Now,
-                Message = prms.Length > 0 ? message : string.Format(message, prms)
-            }));
+            await Host.SubSystem.LogProvider.AddLog(scope, message, prms);
         }
 
 
@@ -40,8 +35,7 @@ namespace BPU
             StatusMessage = "Running";
             
             foreach (var s in Scopes)
-                if (s.Status == ProcessingStatus.Running
-                 || s.Status == ProcessingStatus.Stalled)
+                if (s.Status == ProcessingStatus.Running)
                     await s.Run(this);
 
             while (Status == ProcessingStatus.Running)

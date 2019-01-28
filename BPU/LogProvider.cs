@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace BPU
 {
@@ -18,6 +19,6 @@ namespace BPU
         public async Task AddLog(Scope scope, string message, params object[] prms)
         {
             await AddLog(new Log(scope, message, prms));
-        }        
+        }      
     }
 }
