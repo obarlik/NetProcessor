@@ -6,22 +6,15 @@ using System.Threading.Tasks;
 
 namespace BPU
 {
-    public class Scope : Dictionary<string, object>
+    public class Scope
     {
         static long LastScopeNumber = 0;
 
         public long ScopeNumber;
-        public Context Context;
         public ProcessStep CurrentStep;
 
-        internal Scope Clone()
-        {
-            throw new NotImplementedException();
-        }
-
+        
         public Scope CallerScope;
-        public Dictionary<string, object> Parameters;
-        public object Result;
         public ProcessingStatus Status;
         public string StatusMessage;
 
@@ -31,41 +24,46 @@ namespace BPU
             ScopeNumber = Interlocked.Increment(ref LastScopeNumber);
             Status = ProcessingStatus.Ready;
         }
+        
 
-
-        public async Task AddLog(string message, params object[] prms)
+        public async Task AddLog(Context context, string message, params object[] prms)
         {
-              await Context.AddLog(this, message, prms);
+              await context.AddLog(this, message, prms);
+        }
+
+
+        public async Task SetStatus(Context context, ProcessingStatus status, string message, params object[] prms)
+        {
+            Status = status;
+            StatusMessage = message;
+            await AddLog(context, message, prms);
         }
 
 
         public async Task Run(Context context)
         {
-            Context = context;
-
-            Status = ProcessingStatus.Running;
-            await AddLog("Scope {0} started.", ScopeNumber);
-
-            while (Status == ProcessingStatus.Running 
-                && CurrentStep != null)
+            if (Status == ProcessingStatus.Running)
             {
-                try
-                {
-                    CurrentStep = await CurrentStep.Execute(this);
-                }
-                catch(Exception ex)
-                {
-                    Status = ProcessingStatus.Halted;
-                    StatusMessage = ex.Message;
-                    await AddLog(
-                        "Scope {0} halted with error message '{1}'.", 
-                        ScopeNumber, 
-                        StatusMessage);
-                }
+                if (CurrentStep is StartStep)
+                    await AddLog(context, "Scope {0} started.", ScopeNumber);
+
+                var nextStep = await CurrentStep.Execute(this);
+
+                if (nextStep == null)
+                    if (CurrentStep is FinishStep)
+                        Status = ProcessingStatus.Finished;
+                    else
+                        Status = ProcessingStatus.Halted;
+                else
+                    CurrentStep = nextStep;
             }
 
-            Status = ProcessingStatus.Finished;
-            await AddLog("Scope {0} completed.", ScopeNumber);
+            if (Status == ProcessingStatus.Halted
+             || Status == ProcessingStatus.Finished
+             || Status == ProcessingStatus.Error)
+            {
+                await AddLog(context, "Step {0} completed.", ScopeNumber);
+            }
         }
     }
 }

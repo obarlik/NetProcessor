@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -7,14 +8,13 @@ namespace BPU
 {
     public class Context : Dictionary<string, object>
     {
-        public List<Scope> Scopes;
-        public List<Log> Logs;
         public Host Host;
+        public List<Scope> Scopes;
         public ProcessingStatus Status;
         public string StatusMessage;
 
 
-        public Context()
+        public Context(Host host)
         {
             Status = ProcessingStatus.Ready;
             StatusMessage = "Ready";
@@ -27,20 +27,28 @@ namespace BPU
         }
 
 
-        public async Task Run(Host host)
+        public async Task Execute(Host host)
         {
             Host = host;
 
             Status = ProcessingStatus.Running;
             StatusMessage = "Running";
-            
-            foreach (var s in Scopes)
-                if (s.Status == ProcessingStatus.Running)
-                    await s.Run(this);
+            var i = 1;
 
-            while (Status == ProcessingStatus.Running)
+            while (Status == ProcessingStatus.Running
+                && i == 1)
             {
+                i = 0;
+
+                foreach (var s in Scopes.Where(s => s.Status == ProcessingStatus.Running))
+                {
+                    i++;
+                    await s.Run(this);
+                }
             }
+
+            Status = ProcessingStatus.Finished;
+            StatusMessage = "Finished";
         }
     }
 }
