@@ -2,23 +2,26 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace BPU
 {
     public class Assignment : ProcessStep
     {
         public string Variable;
-        public Expression<Func<Context, object>> Expression;
-        public bool IsGlobal;
-
-        public override ProcessStep Process(Context context)
+        public Expression<Func<Scope, object>> Expression;
+        
+        public override async Task<ProcessStep> Process(Scope scope)
         {
-            var result = Expression.Compile()(context);
+            var t = await base.Process(scope);
+            var result = Expression.Compile()(scope);
 
-            if (IsGlobal)
-                context[Variable] = result;
-            else
-                context.CurrentScope[Variable] = result;
+            if (scope.ContainsKey(Variable))
+                scope[Variable] = result;
+            else if (scope.Context.ContainsKey(Variable))
+                scope.Context[Variable] = result;
+            else if (scope.Context.Host.ContainsKey(Variable))
+                scope.Context.Host[Variable] = result;
 
             context.CurrentScope.Result = result;
 

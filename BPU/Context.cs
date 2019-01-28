@@ -1,22 +1,52 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace BPU
 {
     public class Context : Dictionary<string, object>
     {
-        public Scope CurrentScope;
+        public List<Scope> Scopes;
         public List<Log> Logs;
-        
-        public void AddLog(string message, params object[] prms)
+        public Host Host;
+        public ProcessingStatus Status;
+        public string StatusMessage;
+
+
+        public Context()
         {
-            Logs.Add(new Log()
+            Status = ProcessingStatus.Ready;
+            StatusMessage = "Ready";
+        }
+
+
+        public async Task AddLog(Scope scope, string message, params object[] prms)
+        {
+            await Task.Run(() => Logs.Add(new Log()
             {
-                Scope = CurrentScope,
+                Scope = scope,
                 Time = DateTimeOffset.Now,
                 Message = prms.Length > 0 ? message : string.Format(message, prms)
-            });
+            }));
+        }
+
+
+        public async Task Run(Host host)
+        {
+            Host = host;
+
+            Status = ProcessingStatus.Running;
+            StatusMessage = "Running";
+            
+            foreach (var s in Scopes)
+                if (s.Status == ProcessingStatus.Running
+                 || s.Status == ProcessingStatus.Stalled)
+                    await s.Run(this);
+
+            while (Status == ProcessingStatus.Running)
+            {
+            }
         }
     }
 }
