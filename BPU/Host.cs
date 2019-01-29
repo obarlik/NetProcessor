@@ -35,9 +35,9 @@ namespace BPU
         }
 
 
-        public async Task AddLog(Context context, Scope scope, string message, object[] prms)
+        public async Task AddLog(Guid contextId, Guid scopeId, string message, object[] prms)
         {
-            await SubSystem.LogProvider.AddLog(context, scope, message, prms);
+            await SubSystem.LogProvider.AddLog(Name, contextId, scopeId, message, prms);
         }
 
 

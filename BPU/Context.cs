@@ -34,7 +34,7 @@ namespace BPU
 
         public async Task AddLog(Scope scope, string message, params object[] prms)
         {
-            await Host.Instance.AddLog(this, scope, message, prms);
+            await Host.Instance.AddLog(ContextId, scope.ScopeId, message, prms);
         }
 
 
