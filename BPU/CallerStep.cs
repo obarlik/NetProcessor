@@ -7,27 +7,25 @@ namespace BPU
 {
     public class CallerStep : ProcessStep
     {
-        public Process CalledProcess;
+        public ProcessStep CalledStep;
 
-        protected override Task<ProcessStep> Process(Scope scope)
+        protected override async Task<ProcessStep> Process(Scope scope)
         {
             if (scope.Status == ProcessingStatus.Running)
             {
-                return await Task.Run(() =>
-                {
-                    var calledScope = scope.NewScope();
+                if (CalledStep == null)
+                    return await Task.FromResult(NextStep);
 
-                    calledScope.CallerScope = scope;
-                    calledScope.CurrentStep = CalledProcess.Steps.First(s => s is StartStep);
+                var calledScope = scope.NewScope();
 
-                    scope.Status = ProcessingStatus.AwaitingReturn;
-                    scope.StatusMessage = "Awaiting called process '" + CalledProcess.Name + "'";
+                calledScope.CallerScope = scope;
+                calledScope.CurrentStep = CalledProcess.Steps.First(s => s is StartStep);
 
-                });
+                scope.Status = ProcessingStatus.AwaitingReturn;
+                scope.StatusMessage = "Awaiting called process '" + CalledProcess.Name + "'";
             }
 
-            return  (ProcessStep)null;
-
+            return await Task.FromResult<ProcessStep>(null);
         }
 
     }

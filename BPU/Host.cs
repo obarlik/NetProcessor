@@ -34,6 +34,15 @@ namespace BPU
             get { return SubSystem.ContextProvider.GetContexts(this); }
         }
 
+        
+        public static Host Instance { get; protected set; }
+        
+
+        public static void Initialize(SubSystem subSystem)
+        {
+            Instance = new Host(subSystem);
+        }
+
 
         public async Task Run()
         {
@@ -47,7 +56,7 @@ namespace BPU
                 if (c.Status == ProcessingStatus.Ready
                  || c.Status == ProcessingStatus.Running)
                 {
-                    await c.Run(this);
+                    await c.Execute();
                 }
 
             while (Status == ProcessingStatus.Running

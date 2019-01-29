@@ -6,29 +6,52 @@ using System.Threading.Tasks;
 
 namespace BPU
 {
-    public class Scope
+    public class Scope : Dictionary<string, object>
     {
-        static long LastScopeNumber = 0;
-
-        public long ScopeNumber;
+        public Guid ScopeId;
         public ProcessStep CurrentStep;
 
-        
-        public Scope CallerScope;
+        public Context Context;
+        public Scope ParentScope;
+
         public ProcessingStatus Status;
         public string StatusMessage;
 
+        public int ScopeRunCounter;
+        public int StepRunCounter;
+
+        public DateTimeOffset CreateTime;
+        public DateTimeOffset LastProcessTime;
+
+        public Stack<Guid> VisitedSteps = new Stack<Guid>();
+        
 
         public Scope()
         {
-            ScopeNumber = Interlocked.Increment(ref LastScopeNumber);
-            Status = ProcessingStatus.Ready;
         }
-        
 
-        public async Task AddLog(Context context, string message, params object[] prms)
+
+        public static Scope Spawn(ProcessStep startStep, Scope parentScope = null)
         {
-              await context.AddLog(this, message, prms);
+            return new Scope()
+            {
+                ScopeId = Guid.NewGuid(),
+                CurrentStep = startStep,
+                Context = parentScope == null ? Context.Spawn() : parentScope.Context,
+                ParentScope = parentScope,
+                Status = ProcessingStatus.Ready,
+                StatusMessage = "Ready.",
+                ScopeRunCounter = 0,
+                StepRunCounter = 0,
+                CreateTime = DateTimeOffset.Now,
+                LastProcessTime = DateTimeOffset.Now,
+            };
+        }
+
+
+        public async Task AddLog(string message, params object[] prms)
+        {
+            await Context.AddLog(this, message, prms);
         }
 
 
@@ -36,16 +59,22 @@ namespace BPU
         {
             Status = status;
             StatusMessage = message;
-            await AddLog(context, message, prms);
+            await AddLog(message, prms);
         }
 
 
-        public async Task Run(Context context)
+        public async Task Run()
         {
             if (Status == ProcessingStatus.Running)
             {
-                if (CurrentStep is StartStep)
-                    await AddLog(context, "Scope {0} started.", ScopeNumber);
+                ++StepRunCounter;
+                ++ScopeRunCounter;
+
+                if (ScopeRunCounter == 1)
+                    await AddLog("Step {0} started.", ScopeNumber);
+
+                if (StepRunCounter == 1)
+                    await AddLog("Step {0} started.", ScopeNumber);
 
                 var nextStep = await CurrentStep.Execute(this);
 
@@ -56,14 +85,20 @@ namespace BPU
                         Status = ProcessingStatus.Halted;
                 else
                     CurrentStep = nextStep;
-            }
+            }            
 
             if (Status == ProcessingStatus.Halted
              || Status == ProcessingStatus.Finished
              || Status == ProcessingStatus.Error)
             {
-                await AddLog(context, "Step {0} completed.", ScopeNumber);
+                await AddLog("Step {0} completed, after {1} hits.", ScopeNumber, StepRunCounter);
             }
+        }
+
+
+        public virtual bool UpdateStatus()
+        {
+            throw new NotImplementedException();
         }
     }
 }

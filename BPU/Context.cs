@@ -8,17 +8,30 @@ namespace BPU
 {
     public class Context : Dictionary<string, object>
     {
+        public Guid ContextId;
         public Host Host;
         public List<Scope> Scopes;
         public ProcessingStatus Status;
         public string StatusMessage;
 
 
-        public Context(Host host)
+        public Context()
         {
-            Status = ProcessingStatus.Ready;
-            StatusMessage = "Ready";
         }
+
+        
+        public static Context Spawn()
+        {
+            return new Context()
+            {
+                ContextId = Guid.NewGuid(),
+                Host = Host.Instance,
+                Scopes = new List<Scope>(),
+                Status = ProcessingStatus.Ready,
+                StatusMessage = "Ready."
+            };
+        }
+
 
 
         public async Task AddLog(Scope scope, string message, params object[] prms)
@@ -27,10 +40,8 @@ namespace BPU
         }
 
 
-        public async Task Execute(Host host)
-        {
-            Host = host;
-
+        public async Task Execute()
+        { 
             Status = ProcessingStatus.Running;
             StatusMessage = "Running";
             var i = 1;
@@ -50,5 +61,6 @@ namespace BPU
             Status = ProcessingStatus.Finished;
             StatusMessage = "Finished";
         }
+
     }
 }
