@@ -13,6 +13,7 @@ namespace BPU
 
         public Context Context;
         public Scope ParentScope;
+        public Scope CallerScope;
 
         public ProcessingStatus Status;
         public string StatusMessage;
@@ -55,7 +56,7 @@ namespace BPU
         }
 
 
-        public async Task SetStatus(Context context, ProcessingStatus status, string message, params object[] prms)
+        public async Task SetStatus(ProcessingStatus status, string message, params object[] prms)
         {
             Status = status;
             StatusMessage = message;

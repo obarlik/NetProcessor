@@ -15,20 +15,18 @@ namespace BPU
         {
             return await Task.Run(() =>
             {
-                scope.Result = Expression.Compile()(scope);
+                var result = Expression.Compile()(scope);
 
                 if (scope.ContainsKey(Variable))
                 {
-                    scope[Variable] = scope.Result;
+                    scope[Variable] = result;
                 }
                 else if (scope.Context.ContainsKey(Variable))
                 {
-                    scope.Context[Variable] = scope.Result;
+                    scope.Context[Variable] = result;
                 }
-                else if (scope.Context.Host.ContainsKey(Variable))
-                {
-                    scope.Context.Host[Variable] = scope.Result;
-                }
+                else
+                    scope["$Result"] = result;
 
                 return NextStep;
             });

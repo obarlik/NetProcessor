@@ -9,11 +9,11 @@ namespace BPU
 {
     public class Host : Dictionary<string, object>
     {
+        public string Name;
         public SubSystem SubSystem;
         public ProcessingStatus Status;
         public string StatusMessage;
-
-
+        
         public Host(SubSystem subSystem)
         {
             Status = ProcessingStatus.Ready;
@@ -24,8 +24,8 @@ namespace BPU
         public async Task SetStatus(ProcessingStatus status, string message, params object[] prms)
         {
             Status = status;
-            StatusMessage = prms.Any() ? string.Format(message, prms) : message;
-            await SubSystem.LogProvider.AddLog(null, StatusMessage);
+            StatusMessage = prms.Length > 0 ? string.Format(message, prms) : message;
+            await SubSystem.LogProvider.AddLog(Instance.Name, null, null, StatusMessage);
         }
 
 
@@ -34,7 +34,13 @@ namespace BPU
             get { return SubSystem.ContextProvider.GetContexts(this); }
         }
 
-        
+
+        public async Task AddLog(Context context, Scope scope, string message, object[] prms)
+        {
+            await SubSystem.LogProvider.AddLog(context, scope, message, prms);
+        }
+
+
         public static Host Instance { get; protected set; }
         
 

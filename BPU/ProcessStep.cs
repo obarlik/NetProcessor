@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -29,14 +30,30 @@ namespace BPU
             }
             catch (Exception ex)
             {
-                scope["LastError"] = ex;
+                scope["$LastError"] = ex;
 
                 await scope.AddLog("Step error. {0} {1}", Name, ex.Message);
 
                 if (ErrorStep == null)
                 {
-                    scope.Status = ProcessingStatus.Error;
-                    scope.StatusMessage = "Error: " + ex.Message;
+                    await scope.SetStatus(
+                        ProcessingStatus.Error,
+                        "Error: " + ex.Message);
+
+                    if (!scope.Context.Scopes.Any(s => s.ScopeId != scope.ScopeId))
+                    {
+                        scope.Context["$LastError"] = ex;
+
+                        await scope.Context.SetStatus(
+                            ProcessingStatus.Error,
+                            "Scope " + scope.ScopeId + " threw an unexpected error '" + ex.Message + "'");
+                    }
+
+                    if (scope.CallerScope != null)
+                    {
+                        scope.CallerScope.Status = ProcessingStatus.Error;
+                        scope.CallerScope.StatusMessage = "Scope " + scope.CallerScope.ScopeId + " has called scope " + scope.ScopeId + " but it threw an unexpected error '" + ex.Message + "'";
+                    }
                 }
                 
                 return await Task.FromResult(ErrorStep);
