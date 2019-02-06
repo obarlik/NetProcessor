@@ -16,9 +16,9 @@ namespace BPU
         }
 
 
-        public async Task AddLog(string hostName, Guid? contextId, Guid? scopeId, string message, params object[] prms)
+        public async Task AddLog(string hostName, Guid? contextId, Guid? scopeId, string message)
         {
-            await AddLog(new Log(hostName, contextId, scopeId, message, prms));
+            await AddLog(new Log(hostName, contextId, scopeId, message));
         }      
     }
 }

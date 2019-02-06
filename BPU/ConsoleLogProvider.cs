@@ -16,9 +16,9 @@ namespace BPU
         {
             await Task.Run(() =>
                 Console.WriteLine(
-                    "{0:20}  {1:10}  {2:45}",
+                    "{0}  {1}  {2}",
                     log.Time,
-                    log.Scope?.ScopeNumber,
+                    log.ScopeId,
                     log.Message));
         }
     }

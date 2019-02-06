@@ -32,9 +32,9 @@ namespace BPU
 
 
 
-        public async Task AddLog(Scope scope, string message, params object[] prms)
+        public async Task AddLog(Scope scope, string message)
         {
-            await Host.Instance.AddLog(ContextId, scope.ScopeId, message, prms);
+            await Host.Instance.AddLog(ContextId, scope.ScopeId, message);
         }
 
 
@@ -60,7 +60,7 @@ namespace BPU
                 foreach (var s in Scopes.Where(s => s.Status == ProcessingStatus.Running))
                 {
                     i++;
-                    await s.Run(this);
+                    await s.Run();
                 }
             }
 

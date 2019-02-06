@@ -11,7 +11,7 @@ namespace BPU
         public string Variable;
         public Expression<Func<Scope, object>> Expression;
         
-        protected override async Task<ProcessStep> Process(Scope scope)
+        protected override async Task<ProcessStep> OnExecution(Scope scope)
         {
             return await Task.Run(() =>
             {

@@ -12,55 +12,58 @@ namespace BPU
         public ProcessStep CurrentStep;
 
         public Context Context;
-        public Scope ParentScope;
-        public Scope CallerScope;
+        public Stack<ProcessStep> ReturnSteps = new Stack<ProcessStep>();
 
         public ProcessingStatus Status;
         public string StatusMessage;
 
         public int ScopeRunCounter;
-        public int StepRunCounter;
 
         public DateTimeOffset CreateTime;
-        public DateTimeOffset LastProcessTime;
+        public DateTimeOffset? LastProcessTime;
 
         public Stack<Guid> VisitedSteps = new Stack<Guid>();
-        
+
+        public int RetryCount;
+        public bool CanRetry;
+
 
         public Scope()
         {
         }
 
 
-        public static Scope Spawn(ProcessStep startStep, Scope parentScope = null)
+        public Scope(Context context, ProcessStep startStep)
         {
-            return new Scope()
-            {
-                ScopeId = Guid.NewGuid(),
-                CurrentStep = startStep,
-                Context = parentScope == null ? Context.Spawn() : parentScope.Context,
-                ParentScope = parentScope,
-                Status = ProcessingStatus.Ready,
-                StatusMessage = "Ready.",
-                ScopeRunCounter = 0,
-                StepRunCounter = 0,
-                CreateTime = DateTimeOffset.Now,
-                LastProcessTime = DateTimeOffset.Now,
-            };
+            ScopeId = Guid.NewGuid();
+            CurrentStep = startStep;
+            Context = context;
+            Status = ProcessingStatus.Ready;
+            StatusMessage = "Ready.";
+            ScopeRunCounter = 0;
+            CreateTime = DateTimeOffset.Now;
         }
 
 
-        public async Task AddLog(string message, params object[] prms)
+        public void Retry()
         {
-            await Context.AddLog(this, message, prms);
+            CanRetry = true;
+            Status = ProcessingStatus.Running;
+            StatusMessage = "Running.";
         }
 
 
-        public async Task SetStatus(ProcessingStatus status, string message, params object[] prms)
+        public async Task AddLog(string message)
+        {
+            await Context.AddLog(this, message);
+        }
+
+
+        public async Task SetStatus(ProcessingStatus status, string message)
         {
             Status = status;
             StatusMessage = message;
-            await AddLog(message, prms);
+            await AddLog(message);
         }
 
 
@@ -68,15 +71,9 @@ namespace BPU
         {
             if (Status == ProcessingStatus.Running)
             {
-                ++StepRunCounter;
-                ++ScopeRunCounter;
-
-                if (ScopeRunCounter == 1)
-                    await AddLog("Step {0} started.", ScopeNumber);
-
-                if (StepRunCounter == 1)
-                    await AddLog("Step {0} started.", ScopeNumber);
-
+                if (++ScopeRunCounter == 1)
+                    await AddLog($"Scope '{ScopeId}' started.");
+                
                 var nextStep = await CurrentStep.Execute(this);
 
                 if (nextStep == null)
@@ -92,7 +89,7 @@ namespace BPU
              || Status == ProcessingStatus.Finished
              || Status == ProcessingStatus.Error)
             {
-                await AddLog("Step {0} completed, after {1} hits.", ScopeNumber, StepRunCounter);
+                await AddLog($"Scope {ScopeId} ended, after {ScopeRunCounter} runs.");
             }
         }
 

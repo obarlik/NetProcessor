@@ -11,7 +11,7 @@ namespace BPU
         public Expression<Func<Scope, bool>> Expression;
         public ProcessStep TrueStep;
 
-        protected override async Task<ProcessStep> Process(Scope scope)
+        protected override async Task<ProcessStep> OnExecution(Scope scope)
         {
             return await Task.Run(() =>
                 Expression.Compile()(scope) ?

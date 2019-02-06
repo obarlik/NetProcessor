@@ -8,13 +8,19 @@ namespace BPU
 {
     public class ProcessStep
     {
-        public Process ParentProcess;
+        public Process Process;
         public string Name;
         public ProcessStep NextStep;
         public ProcessStep ErrorStep;
 
 
-        protected virtual async Task<ProcessStep> Process(Scope scope)
+        public string UniqueName
+        {
+            get { return $"{Process.Name}/{Name}"; }
+        }
+
+
+        protected virtual async Task<ProcessStep> OnExecution(Scope scope)
         {
             return await Task.FromResult(NextStep);
         }
@@ -22,11 +28,11 @@ namespace BPU
 
         public async Task<ProcessStep> Execute(Scope scope)
         {
-            await scope.AddLog("Step entrance. {0}", Name);
+            await scope.AddLog($"Step entrance. {Name}");
 
             try
             {
-                return await Process(scope);
+                return await OnExecution(scope);
             }
             catch (Exception ex)
             {
@@ -39,21 +45,6 @@ namespace BPU
                     await scope.SetStatus(
                         ProcessingStatus.Error,
                         "Error: " + ex.Message);
-
-                    if (!scope.Context.Scopes.Any(s => s.ScopeId != scope.ScopeId))
-                    {
-                        scope.Context["$LastError"] = ex;
-
-                        await scope.Context.SetStatus(
-                            ProcessingStatus.Error,
-                            "Scope " + scope.ScopeId + " threw an unexpected error '" + ex.Message + "'");
-                    }
-
-                    if (scope.CallerScope != null)
-                    {
-                        scope.CallerScope.Status = ProcessingStatus.Error;
-                        scope.CallerScope.StatusMessage = "Scope " + scope.CallerScope.ScopeId + " has called scope " + scope.ScopeId + " but it threw an unexpected error '" + ex.Message + "'";
-                    }
                 }
                 
                 return await Task.FromResult(ErrorStep);
