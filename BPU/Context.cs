@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 
 namespace BPU
 {
-    public class Context : VariableDictionary
+    public class Context
     {
         public Guid ContextId;
-        public List<Scope> Scopes;
+        public List<Scope> Scopes = new List<Scope>();
         public ProcessingStatus Status;
         public string StatusMessage;
+        public VariableDictionary Variables = new VariableDictionary();
 
         public event EventHandler OnUpdate;
         public event EventHandler<LogEventArgs> OnLog;
@@ -31,6 +32,18 @@ namespace BPU
                 Status = ProcessingStatus.Ready,
                 StatusMessage = "Ready."
             };
+        }
+        
+
+        public object GetVariable(string variableName)
+        {
+            return Variables.GetVariable(variableName);
+        }
+
+
+        public void SetVariable(string variableName, object value)
+        {
+            Variables.SetVariable(variableName, value);
         }
 
 

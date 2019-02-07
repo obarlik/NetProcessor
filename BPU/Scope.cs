@@ -7,10 +7,11 @@ using System.Threading.Tasks;
 
 namespace BPU
 {
-    public class Scope : VariableDictionary
+    public class Scope
     {
         public Guid ScopeId;
         public ProcessStep CurrentStep;
+        public VariableDictionary Variables;
 
         public Context Context;
         public Stack<ProcessStep> ReturnSteps = new Stack<ProcessStep>();
@@ -40,13 +41,29 @@ namespace BPU
 
         public void ImportVariable(string variableName)
         {
-            SetVariable(variableName, Context.GetVariable(variableName));
+            Variables.SetVariable(
+                variableName, 
+                Context.GetVariable(variableName));
         }
         
 
         public void ExportVariable(string variableName)
         {
-            Context.SetVariable(variableName, GetVariable(variableName));
+            Context.SetVariable(
+                variableName, 
+                Variables.GetVariable(variableName));
+        }
+
+
+        public object GetVariable(string variableName)
+        {
+            return Variables.GetVariable(variableName);
+        }
+
+
+        public void SetVariable(string variableName, object value)
+        {
+            Variables.SetVariable(variableName, value);
         }
 
 
