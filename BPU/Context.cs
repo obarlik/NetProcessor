@@ -12,6 +12,8 @@ namespace BPU
         public List<Scope> Scopes = new List<Scope>();
         public ProcessingStatus Status;
         public string StatusMessage;
+
+
         public VariableDictionary Variables = new VariableDictionary();
 
         public event EventHandler OnUpdate;
@@ -33,8 +35,8 @@ namespace BPU
                 StatusMessage = "Ready."
             };
         }
-        
 
+        
         public object GetVariable(string variableName)
         {
             return Variables.GetVariable(variableName);

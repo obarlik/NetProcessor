@@ -67,7 +67,7 @@ namespace BPU
         }
 
 
-        public static Scope Spawn(Context context, ProcessStep startStep)
+        public static async Task<Scope> Spawn(Context context, ProcessStep startStep)
         {
             var scope = new Scope()
             {
@@ -80,6 +80,9 @@ namespace BPU
             };
 
             context.AddScope(scope);
+
+            await scope.DoUpdate();
+            await context.DoUpdate();
 
             return scope;
         }
