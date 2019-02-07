@@ -10,8 +10,12 @@ namespace BPU
     {
         public Process Process;
         public string Name;
+
         public ProcessStep NextStep;
         public ProcessStep ErrorStep;
+
+        public List<string> ImportedVariables;
+        public List<string> ExportedVariables;
 
 
         public string UniqueName
@@ -28,7 +32,7 @@ namespace BPU
 
         public async Task<ProcessStep> Execute(Scope scope)
         {
-            await scope.AddLog($"Step entrance. {Name}");
+            await scope.DoLog($"Step {Name} entered.");
 
             try
             {
@@ -38,20 +42,18 @@ namespace BPU
             {
                 scope["$LastError"] = ex;
 
-                await scope.AddLog("Step error. {0} {1}", Name, ex.Message);
+                await scope.DoLog($"Error while executing {Name} step. Details: {ex.Message}");
 
                 if (ErrorStep == null)
                 {
-                    await scope.SetStatus(
-                        ProcessingStatus.Error,
-                        "Error: " + ex.Message);
+                    await scope.SetStatus(ProcessingStatus.Error, $"Error: {ex.Message}");
                 }
                 
                 return await Task.FromResult(ErrorStep);
             }
             finally
             {
-                await scope.AddLog("Step exit. {0}", Name);
+                await scope.DoLog($"Step {Name} left.");
             }
         }
     }

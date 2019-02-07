@@ -11,17 +11,10 @@ namespace BPU
 
         protected override async Task<ProcessStep> OnExecution(Scope scope)
         {
-            var newScope = new Scope(scope.Context, ParallelStep);
+            var newScope = scope.Context.SpawnScope(ParallelStep);
 
-            newScope.SetStatus(ProcessingStatus.Running, )
-
-#pragma warning disable CS4014
-
-
-            scope.Context.Scopes.Add();
-
-#pragma warning restore CS4014
-
+            await newScope.SetStatus(ProcessingStatus.Running, "Running.");
+            
             return await base.OnExecution(scope);
         }
     }

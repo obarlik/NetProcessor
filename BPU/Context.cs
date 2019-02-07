@@ -6,19 +6,22 @@ using System.Threading.Tasks;
 
 namespace BPU
 {
-    public class Context : Dictionary<string, object>
+    public class Context : VariableDictionary
     {
         public Guid ContextId;
         public List<Scope> Scopes;
         public ProcessingStatus Status;
         public string StatusMessage;
 
+        public event EventHandler OnUpdate;
+        public event EventHandler<LogEventArgs> OnLog;
+
 
         public Context()
         {
         }
 
-        
+
         public static Context Spawn()
         {
             return new Context()
@@ -31,18 +34,25 @@ namespace BPU
         }
 
 
-
-        public async Task AddLog(Scope scope, string message)
-        {
-            await Host.Instance.AddLog(ContextId, scope.ScopeId, message);
-        }
-
-
         public async Task SetStatus(ProcessingStatus status, string message, params object[] prms)
         {
             Status = status;
             StatusMessage = prms.Any() ? string.Format(message, prms) : message;
-            await AddLog(null, StatusMessage);
+            await DoLog(StatusMessage);
+        }
+
+
+        public async Task DoLog(string message)
+        {
+            var log = new Log(null, ContextId, null, message);
+
+            await Task.Run(() => OnLog?.Invoke(this, new LogEventArgs(log)));
+        }
+
+
+        public async Task DoUpdate()
+        {
+            await Task.Run(() => OnUpdate?.Invoke(this, EventArgs.Empty));
         }
 
 
@@ -66,6 +76,13 @@ namespace BPU
 
             Status = ProcessingStatus.Finished;
             StatusMessage = "Finished";
+        }
+
+
+
+        public void AddScope(Scope scope)
+        {
+            Scopes.Add(scope);
         }
     }
 }
