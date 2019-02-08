@@ -11,15 +11,14 @@ namespace BPU
         {
         }
 
-
-        public override async Task AddLog(Log log)
+        
+        void LogProvider.SaveLog(Log log)
         {
-            await Task.Run(() =>
-                Console.WriteLine(
-                    "{0}  {1}  {2}",
-                    log.Time,
-                    log.ScopeId,
-                    log.Message));
+            Console.WriteLine(
+                "{0}  {1}  {2}",
+                log.Time,
+                log.ScopeId,
+                log.Message);
         }
     }
 }

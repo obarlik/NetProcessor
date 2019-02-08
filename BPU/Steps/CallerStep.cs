@@ -9,15 +9,15 @@ namespace BPU
     {
         public ProcessStep CalledStep;
 
-        protected override async Task<ProcessStep> OnExecution(Scope scope)
+        protected override ProcessStep OnExecution(Scope scope)
         {
             if (CalledStep != null)
             {
                 scope.ReturnSteps.Push(NextStep);
-                return await Task.FromResult(CalledStep);
+                return CalledStep;
             }
 
-            return await Task.FromResult(NextStep);
+            return NextStep;
         }
     }
 }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace BPU
 {
-    public class Scope : IVariableContainer
+    public class Scope : VariableContainer
     {
         public Guid ScopeId;
         public ProcessStep CurrentStep;
@@ -57,7 +57,7 @@ namespace BPU
         }
         
 
-        public static async Task<Scope> Spawn(Context context, ProcessStep startStep)
+        public static Scope Spawn(Context context, ProcessStep startStep)
         {
             var scope = new Scope()
             {
@@ -71,23 +71,21 @@ namespace BPU
 
             context.AddScope(scope);
 
-            await scope.DoUpdate();
-            await context.DoUpdate();
+            context.DoUpdate();
 
             return scope;
         }
 
 
-        public async Task DoUpdate()
+        public void DoUpdate()
         {
-            await Task.Run(() => OnUpdate?.Invoke(this, EventArgs.Empty));
+            OnUpdate?.Invoke(this, EventArgs.Empty);
         }
 
 
-        public async Task DoLog(string message)
+        public void DoLog(string message)
         {
-            await Task.Run(() => OnLog?.Invoke(this, new LogEventArgs(
-                new Log(null, Context?.ContextId, ScopeId, message))));
+            OnLog?.Invoke(this, new LogEventArgs(null, Context?.ContextId, ScopeId, message));
         }
 
 
@@ -99,22 +97,22 @@ namespace BPU
         }
         
 
-        public async Task SetStatus(ProcessingStatus status, string message)
+        public void SetStatus(ProcessingStatus status, string message)
         {
             Status = status;
             StatusMessage = message;
-            await DoLog(message);
+            DoLog(message);
         }
 
 
-        public async Task Run()
+        public void Run()
         {
             if (Status == ProcessingStatus.Running)
             {
                 if (++ScopeRunCounter == 1)
-                    await DoLog($"Scope {ScopeId} started.");
+                    DoLog($"Scope {ScopeId} started.");
                 
-                var nextStep = await CurrentStep.Execute(this);
+                var nextStep = CurrentStep.Execute(this);
 
                 if (nextStep == null)
                 {
@@ -131,7 +129,7 @@ namespace BPU
              || Status == ProcessingStatus.Finished
              || Status == ProcessingStatus.Error)
             {
-                await DoLog($"Scope {ScopeId} ended, after {ScopeRunCounter} runs.");
+                DoLog($"Scope {ScopeId} ended, after {ScopeRunCounter} runs.");
             }
         }
     }

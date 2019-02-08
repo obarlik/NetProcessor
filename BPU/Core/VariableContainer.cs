@@ -5,7 +5,7 @@ using System.Text;
 
 namespace BPU
 {
-    public interface IVariableContainer
+    public interface VariableContainer
     {
         Dictionary<string, object> Variables { get; }
     }

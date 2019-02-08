@@ -16,7 +16,7 @@ namespace BPU
         }
 
 
-        public Log(string hostName, Guid? contextId, Guid? scopeId, string message)
+        public Log( string hostName, Guid? contextId, Guid? scopeId, string message)
         {
             HostName = hostName;
             ContextId = contextId;

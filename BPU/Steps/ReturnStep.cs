@@ -7,14 +7,14 @@ namespace BPU
 {
     public class ReturnStep : ProcessStep
     {
-        protected override async Task<ProcessStep> OnExecution(Scope scope)
+        protected override ProcessStep OnExecution(Scope scope)
         {
             if (scope.ReturnSteps.Count > 0)
             {
-                return await Task.FromResult(scope.ReturnSteps.Pop());
+                return scope.ReturnSteps.Pop();
             }
 
-            return await Task.FromResult(NextStep);
+            return NextStep;
         }
     }
 }

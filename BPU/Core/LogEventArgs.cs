@@ -11,6 +11,11 @@ namespace BPU
             Log = log;
         }
 
+        public LogEventArgs(string hostName, Guid? contextId, Guid scopeId, string message) 
+            : this(new Log(hostName, contextId, scopeId, message))
+        {
+        }
+
         public Log Log { get; set; }
     }
 }

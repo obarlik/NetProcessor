@@ -6,17 +6,16 @@ using System.Threading.Tasks;
 
 namespace BPU
 {
-    public class Decision : ProcessStep
+    public class DecisionStep : ProcessStep
     {
         public Expression<Func<Scope, bool>> Expression;
         public ProcessStep TrueStep;
 
-        protected override async Task<ProcessStep> OnExecution(Scope scope)
+        protected override ProcessStep OnExecution(Scope scope)
         {
-            return await Task.Run(() =>
-                Expression.Compile()(scope) ?
-                    TrueStep :
-                    NextStep);
+            return Expression.Compile()(scope) ?
+                TrueStep :
+                NextStep;
         }
     }
 }
