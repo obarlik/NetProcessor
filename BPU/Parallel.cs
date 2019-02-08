@@ -12,11 +12,8 @@ namespace BPU
 
         protected override async Task<ProcessStep> OnExecution(Scope scope)
         {
-            return await Task.Run(async () =>
-            {
-                Scope.Spawn(scope.Context, ParallelStep);
-                return await base.OnExecution(scope);
-            });
+            await Scope.Spawn(scope.Context, ParallelStep);
+            return await base.OnExecution(scope);
         }
     }
 }

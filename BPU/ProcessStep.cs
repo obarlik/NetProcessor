@@ -40,7 +40,7 @@ namespace BPU
             }
             catch (Exception ex)
             {
-                scope["$LastError"] = ex;
+                scope.Variables["$LastError"] = ex;
 
                 await scope.DoLog($"Error while executing {Name} step. Details: {ex.Message}");
 
