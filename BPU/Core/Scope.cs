@@ -53,6 +53,8 @@ namespace BPU
             Status = ProcessingStatus.Ready;
             StatusMessage = "Ready.";
             CurrentStep = currentStep;
+
+            Context.Scopes.Add(this);
         }
 
 

@@ -4,7 +4,8 @@ using System.Text;
 
 namespace BPU.Core
 {
-    public enum LogLevel
+    [Flags]
+    public enum LogLevel : int
     {
         Trace,
         Information,

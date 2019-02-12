@@ -77,10 +77,7 @@ namespace BPU
             return new Process();
         }
 
-
-        public abstract void SaveProcess(Process process);
-
-
+        
         public virtual Context NewContext()
         {
             return new Context();
