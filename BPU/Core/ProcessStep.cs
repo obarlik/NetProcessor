@@ -44,8 +44,7 @@ namespace BPU
 
         public ProcessStep Execute(Scope scope)
         {
-            scope.SetStatus(ProcessingStatus.Running,
-                            "Running.");
+            scope.SetStatus(ProcessingStatus.Running, "Running.");
 
             scope.DoLog($"Step {Name} entered.");
 
@@ -54,24 +53,19 @@ namespace BPU
                 var result = OnExecution(scope);
 
                 if (result == null)
-                    scope.SetStatus(ProcessingStatus.Finished,
-                                    "Finished.");
-                else
-                    scope.SetStatus(ProcessingStatus.AwaitingToRun,
-                                    "Ready for next round.");
+                    scope.SetStatus(ProcessingStatus.Finished, "Finished.");
 
                 return result;
             }
             catch (Exception ex)
             {
-                scope.Variables["$LastError"] = ex;
+                scope.LastError = ex;
 
                 scope.DoLog($"Error while executing {Name} step. Details: {ex.Message}");
 
                 if (ErrorStep == null)
                 {
-                    scope.SetStatus(ProcessingStatus.Error, 
-                                    $"Error: {ex.Message}");
+                    scope.SetStatus(ProcessingStatus.Error, $"Error: {ex.Message}");
                 }
                 
                 return ErrorStep;

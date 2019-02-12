@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace BPU
 {
-    public interface SubSystem : LogProvider, ProcessProvider, ContextProvider
+    public interface SubSystem : ILogProvider, IContextProvider
     {
     }
 }

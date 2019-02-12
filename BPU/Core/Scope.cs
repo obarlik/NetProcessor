@@ -7,16 +7,19 @@ using System.Threading.Tasks;
 
 namespace BPU
 {
-    public class Scope : VariableContainer
+    public class Scope : IVariableContainer
     {
         public Guid ScopeId;
-        public ProcessStep CurrentStep;
-
-        public Dictionary<string, object> Variables { get; private set; }
 
         public Context Context;
-        public Stack<ProcessStep> ReturnSteps = new Stack<ProcessStep>();
+        public ProcessStep CurrentStep;
 
+        ILogProvider LogProvider;
+
+        public Dictionary<string, object> Variables { get; set; }
+        public Stack<Guid> ReturnStepIds { get; set; }
+        public Stack<Guid> VisitedStepIds { get; set; }
+    
         public ProcessingStatus Status;
         public string StatusMessage;
 
@@ -25,19 +28,31 @@ namespace BPU
         public DateTimeOffset CreateTime;
         public DateTimeOffset? LastProcessTime;
 
-        public Stack<Guid> VisitedSteps = new Stack<Guid>();
-
         public int RetryCount;
         public bool CanRetry;
-
-        public event EventHandler OnUpdate;
-
-        public event EventHandler<LogEventArgs> OnLog;
+        public Exception LastError;
 
 
-        public Scope()
+        public Scope(ILogProvider logProvider)
+        {
+            LogProvider = logProvider;
+        }
+
+
+        public Scope(ILogProvider logProvider, Context context, ProcessStep currentStep)
+            : this(logProvider)
         {
             Variables = new Dictionary<string, object>();
+            ReturnStepIds = new Stack<Guid>();
+            VisitedStepIds = new Stack<Guid>();
+
+            ScopeId = Guid.NewGuid();
+            Context = context;
+            ScopeRunCounter = 0;
+            CreateTime = DateTimeOffset.Now;
+            Status = ProcessingStatus.Ready;
+            StatusMessage = "Ready.";
+            CurrentStep = currentStep;
         }
 
 
@@ -56,26 +71,6 @@ namespace BPU
                 this.GetVariable(variableName));
         }
         
-
-        public static Scope Spawn(Context context, ProcessStep startStep)
-        {
-            var scope = new Scope()
-            {
-                ScopeId = Guid.NewGuid(),
-                Context = context,
-                ScopeRunCounter = 0,
-                CreateTime = DateTimeOffset.Now,
-                Status = ProcessingStatus.Ready,
-                StatusMessage = "Ready.",
-            };
-
-            context.AddScope(scope);
-
-            context.DoUpdate();
-
-            return scope;
-        }
-
 
         public void DoUpdate()
         {
@@ -105,8 +100,10 @@ namespace BPU
         }
 
 
-        public void Run()
+        public void Execute()
         {
+            SetStatus(ProcessingStatus.Running, "Running.");
+            
             if (Status == ProcessingStatus.Running)
             {
                 if (++ScopeRunCounter == 1)
@@ -131,6 +128,11 @@ namespace BPU
             {
                 DoLog($"Scope {ScopeId} ended, after {ScopeRunCounter} runs.");
             }
+        }
+
+
+        public virtual void Save()
+        {
         }
     }
 }

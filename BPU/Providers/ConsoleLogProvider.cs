@@ -5,14 +5,14 @@ using System.Threading.Tasks;
 
 namespace BPU
 {
-    public class ConsoleLogProvider : LogProvider
+    public class ConsoleLogProvider : ILogProvider
     {
         public ConsoleLogProvider()
         {
         }
 
         
-        void LogProvider.SaveLog(Log log)
+        public void SaveLog(Log log)
         {
             Console.WriteLine(
                 "{0}  {1}  {2}",

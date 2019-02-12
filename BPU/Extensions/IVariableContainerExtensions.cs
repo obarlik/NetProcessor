@@ -7,7 +7,7 @@ namespace BPU
 {
     public static class IVariableContainerExtensions
     {
-        public static string GetKey(this VariableContainer container, string variableName)
+        public static string GetKey(this IVariableContainer container, string variableName)
         {
             return container.Variables.Keys
                    .FirstOrDefault(k =>
@@ -16,7 +16,7 @@ namespace BPU
         }
 
 
-        public static void SetVariable(this VariableContainer container, string variableName, object value)
+        public static void SetVariable(this IVariableContainer container, string variableName, object value)
         {
             var key = container.GetKey(variableName) ?? variableName;
 
@@ -27,7 +27,7 @@ namespace BPU
         }
 
 
-        public static object GetVariable(this VariableContainer container, string variableName)
+        public static object GetVariable(this IVariableContainer container, string variableName)
         {
             var key = container.GetKey(variableName);
 

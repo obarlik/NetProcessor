@@ -49,5 +49,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BPU\BPU.csproj">
+      <Project>{32c4abf7-7845-4f1a-a06b-3a4d3daf2c8d}</Project>
+      <Name>BPU</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

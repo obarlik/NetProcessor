@@ -6,20 +6,23 @@ using System.Threading.Tasks;
 
 namespace BPU
 {
-    public class Context : VariableContainer
+    public class Context : IVariableContainer
     {
         public Guid ContextId;
         public ProcessingStatus Status;
         public string StatusMessage;
 
         public Dictionary<string, object> Variables { get; private set; }
-        public List<Scope> Scopes { get; private set; }
+        public List<Scope> Scopes { get; set; }
 
         public Host Host;
-        
+
+        public HashSet<Guid> RunningScopeIds;
+
 
         public Context()
         {
+            RunningScopeIds = new HashSet<Guid>();
         }
 
 
@@ -57,36 +60,55 @@ namespace BPU
         }
 
 
+        public virtual void ScopeUpdated(Scope scope)
+        {
+        }
+
+
         public void Execute()
         {
-            SetStatus(ProcessingStatus.Running,
-                      "Running");
-            
-            var runnableScopes =
-                Scopes.Where(s => s.Status == ProcessingStatus.Running 
-                               || s.Status == ProcessingStatus.AwaitingToRun)
+            var scopesWithIssues =
+                Scopes.Where(s => (s.Status == ProcessingStatus.Error
+                                || s.Status == ProcessingStatus.Halted)
+                                && (s.RetryCount <= 0))
                 .ToArray();
 
-            while (Status == ProcessingStatus.Running)
+            if (scopesWithIssues.Any())
             {
-                var runnableScopes = 
-                    Scopes.Where(s => s.Status == ProcessingStatus.Running)
-                    .ToArray();
+                var scopesList = string.Join(
+                    ", ",
+                    scopesWithIssues.Select(s => $"ScopeId:{s.ScopeId} Step:{s.CurrentStep?.UniqueName ?? "NULL"} Error:{s.LastError}"));
 
-                if (!runnableScopes.Any())
-                runnableScopes
-                .AsParallel()
-                .ForAll();
-
-                foreach (var s in Scopes.Where(s => s.Status == ProcessingStatus.Running))
-                {
-                    i++;
-                    Task.Run(() => s.Run());
-                }
+                throw new InvalidOperationException(
+                    $"Önce sorunlu scope kayıtları düzeltilmeli! ({ scopesList })");
             }
 
-            SetStatus(ProcessingStatus.Finished,
-                      "Finished");
+            SetStatus(ProcessingStatus.Running, "Context running.");
+
+            var tasks =
+                Scopes.Where(s => s.Status == ProcessingStatus.Running)
+                .Select(s =>
+                    Task.Run(() =>
+                    {
+                        if (!SetScopeRunning(s.ScopeId, true))
+                            return;
+
+                        try { s.Execute(); }
+                        catch (Exception ex) { s.LastError = ex; s.SetStatus(ProcessingStatus.Error, $"Error: {ex.Message}"); }
+                        finally { SetScopeRunning(s.ScopeId, false); }
+                    }))
+                .ToArray();
+
+            Task.WaitAll(tasks);
+
+            if (Scopes.Any(s => s.Status == ProcessingStatus.Error))
+                SetStatus(ProcessingStatus.Error, "At least one scope is failed!");
+
+            else if (Scopes.Any(s => s.Status == ProcessingStatus.Halted))
+                SetStatus(ProcessingStatus.Error, "At least one scope is halted!");
+
+            else if (!Scopes.Any(s => s.Status == ProcessingStatus.Running))
+                SetStatus(ProcessingStatus.Finished, "Context finished.");
         }
 
 
@@ -94,6 +116,26 @@ namespace BPU
         {
             Scopes.Add(scope);
             scope.DoUpdate();
+        }
+
+
+        public bool SetScopeRunning(Guid scopeId, bool running)
+        {
+            if (running == RunningScopeIds.Contains(scopeId))
+                return false;
+
+            lock (RunningScopeIds)
+            {
+                if (running == RunningScopeIds.Contains(scopeId))
+                    return false;
+
+                if (running)
+                    RunningScopeIds.Remove(scopeId);
+                else
+                    RunningScopeIds.Add(scopeId);
+
+                return true;
+            }
         }
     }
 }

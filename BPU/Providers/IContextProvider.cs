@@ -3,10 +3,8 @@ using System.Collections.Generic;
 
 namespace BPU
 {
-    public interface ContextProvider
+    public interface IContextProvider
     {
         IEnumerable<Context> GetContexts(); 
-        Context NewContext();
-        void SaveContext(Context context);
     }
 }

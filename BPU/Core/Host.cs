@@ -7,25 +7,26 @@ using System.Threading.Tasks;
 
 namespace BPU
 {
-    public abstract class Host : SubSystem
+    public class Host
     {
         public string Name;
         public ProcessingStatus Status;
         public string StatusMessage;
+        
+        IContextProvider ContextProvider;
+        ILogProvider LogProvider;
+        
+        public HashSet<Guid> RunningContextIds;
 
-
-        public Host()
+        
+        public Host(ILogProvider logProvider, IContextProvider contextProvider)
         {
+            ContextProvider = contextProvider;
+            LogProvider = logProvider;
             Status = ProcessingStatus.Ready;
+            RunningContextIds = new HashSet<Guid>();
         }
-
-
-        public abstract void SaveLog(Log log);
-
-        public abstract IEnumerable<Process> GetProcesses();
-        public abstract IEnumerable<Context> GetContexts();
-        public abstract void SaveContext(Context context);
-
+        
 
         public void SetStatus(ProcessingStatus status, string message, params object[] prms)
         {
@@ -53,7 +54,14 @@ namespace BPU
                                   .Where(c => c.Status == ProcessingStatus.Running)
                                   .ToArray())
                 {
-                    Task.Run(() => c.Execute());
+                    Task.Run(() =>
+                    {
+                        if (!SetContextRunning(c.ContextId, true))
+                            return;
+
+                        try { c.Execute(); }
+                        finally { SetContextRunning(c.ContextId, false); }
+                    });
                 }
 
                 Thread.Sleep(1000);
@@ -90,6 +98,26 @@ namespace BPU
         public virtual void SaveScope(Scope scope)
         {
             SaveContext(scope.Context);
+        }
+
+
+        public bool SetContextRunning(Guid contextId, bool running)
+        {
+            if (running == RunningContextIds.Contains(contextId))
+                return false;
+
+            lock (RunningContextIds)
+            {
+                if (running == RunningContextIds.Contains(contextId))
+                    return false;
+
+                if (running)
+                    RunningContextIds.Remove(contextId);
+                else
+                    RunningContextIds.Add(contextId);
+
+                return true;
+            }
         }
     }
 }
